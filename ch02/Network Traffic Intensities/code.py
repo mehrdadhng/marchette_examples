@@ -242,7 +242,7 @@ def estimate(net , N:Decimal , covariance_matrix , sigma:Decimal , estimation_Ty
 if __name__ == '__main__':
 
     cov_per = 50
-    N = Decimal('40')
+    N = Decimal('80')
     gamma = Decimal('0.0000001')
     epsilon = Decimal('0.00000000001')
     uniform_init = False

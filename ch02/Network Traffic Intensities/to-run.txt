@@ -1,0 +1,6 @@
+# to install dependencies(if you haven't done it already!)
+./install-dependencies.sh
+
+
+# to run
+sudo python3 code.py
