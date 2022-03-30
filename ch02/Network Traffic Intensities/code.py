@@ -10,7 +10,6 @@ from decimal import *
 import sys
 import time
 
-##check round-decimal
 
 class customTopo(Topo):
     def build( self , rtt_delays , **params ):
@@ -85,7 +84,6 @@ def arg_min_nonzero(d, w):
     index = np.argmin(tempmat)
     while w[index] == Decimal('0'):
         tempmat[index] = np.max(tempmat)
-        #no longer the minimum!
         index = np.argmin(tempmat)
     return index
 
@@ -123,12 +121,6 @@ def alg(N:Decimal , K , sigma :Decimal , gamma:Decimal , epsilon:Decimal , unifo
             return weights
         i = np.argmax(np.diagonal(Dt))
         weights[i] += alpha_t
-        ###check later
-        # if i == j:
-        #     i = np.random.randint(0 , len(weights))
-        #     while(weights[j] == 0):
-        #         j = np.random.randint(0 , len(weights))
-        ###......
         Dtp = get_D(weights, N, K, sigma)
         j = arg_min_nonzero(Dtp, weights)
         if weights[j] - alpha_t < Decimal('0'):
@@ -144,7 +136,6 @@ def alg(N:Decimal , K , sigma :Decimal , gamma:Decimal , epsilon:Decimal , unifo
                 alpha_t /= Decimal('2')
         else:
             print('Error: Determinant of matrix D is 0')
-            #return weights
         Dt = Dtt
 
 
@@ -163,7 +154,6 @@ def estimate(net , N:Decimal , covariance_matrix , sigma:Decimal , estimation_Ty
                 weights.append(Decimal('0'))
             weights = np.array(weights)
             weights[nodes_to_monitor] = Decimal('1')/N
-        #print('sum of weights:  ' + str(np.sum(weights)))
         host = net.getNodeByName('h0')
         for i in range(len(nodes_to_monitor)):
             node = net.getNodeByName('n%s' % (nodes_to_monitor[i] + 1))
@@ -217,28 +207,13 @@ def estimate(net , N:Decimal , covariance_matrix , sigma:Decimal , estimation_Ty
                         print('\npacket loss on node n%s'%(nodes_to_monitor[i] + 1)+'. trying again...\n')
                         fail_counter += Decimal('1')
             avg_results.append(np.mean(temp))
-        #print('supposed N :  ' + str(sumval))
     K_Z_ep = np.array(covariance_matrix[np.array(nodes_to_monitor), :])
     K_ep = np.array(covariance_matrix[np.array(nodes_to_monitor), :][:, np.array(nodes_to_monitor)])
     W_ep = np.array(np.diag(np.array(weights)[np.array(nodes_to_monitor)] * N * np.power(sigma , -2)))
     avg_results = np.array(avg_results).reshape(len(avg_results) , 1)
     U_estimation = np.matmul(np.matmul(K_Z_ep.T.astype(float),np.linalg.inv(K_ep.astype(float) + np.linalg.inv(W_ep.astype(float)))),avg_results.astype(float))
-    # K_Z_ep = covariance_matrix[np.array(nodes_to_monitor), :][:, np.arange(S)].reshape(len(nodes_to_monitor), S)
-    # K_ep = covariance_matrix[np.array(nodes_to_monitor), :][:, np.array(nodes_to_monitor)]
-    # W_ep = np.diag(weights * N * sigma ** (-2.0))[np.array(nodes_to_monitor), :][:, np.array(nodes_to_monitor)]
-    # U_estimation = np.matmul(np.matmul(K_Z_ep.T,np.linalg.inv((K_ep + np.linalg.inv(W_ep)))),(np.array(avg_results).reshape(len(avg_results) , 1)))
-    # if estimation_Type == 'uniform':
-    #     print('u est:  ' + str(U_estimation))
-    # else:
-    #     print('w est:  ' + str(U_estimation))
     return U_estimation
 
-# def progressBar(current , total , barlength = 20):
-#     percent = float(current)*100 / total
-#     arrow = '-' * int(percent/100 * barlength -1) + '>'
-#     spaces = ' ' * (barlength - len(arrow))
-#
-#     print('Progress: [%s%s] %d %%' % (arrow,spaces,percent) , end='r')
 if __name__ == '__main__':
 
     cov_per = 50
@@ -250,9 +225,6 @@ if __name__ == '__main__':
 
     setLogLevel('info')
     net, covmat, sigma , rtt_delays  = create_network(cov_samples_per_rv=cov_per)
-    # print('rtt delays =  ' + str(rtt_delays))
-    # print('first entry:  ' + str(rtt_delays[0]))
-    # print('first entry type:  ' + str(type(rtt_delays[0])))
     print('\n\n')
     print('10 runs of estimation using uniform weights...please wait...')
     uniform_estimations = []
@@ -266,24 +238,14 @@ if __name__ == '__main__':
     weights_estimations = []
     supporting_points_list = []
     for i in range(10):
-        # observations = []
         msg = '\r \tprogress: %s'%((i)*10) +'%'
         sys.stdout.write(msg)
         weights = alg(N=N, K=covmat, sigma=sigma, gamma=gamma, epsilon=epsilon , uniform_initialization=uniform_init)
-        # for nn in range(len(weights)):
-        #     observations.append(round(N*weights[nn]))
-        # print('observations:  ' + str(observations))
-        #counter = Decimal('0')
         nodes_to_monitor = []
         for i in range(len(weights)):
-            # if weights[i] < Decimal('0'):
-            #     print('negative weight!!!!')
             if round(N * weights[i]) > 0:
                 nodes_to_monitor.append(i)
-            # else:
-            #     counter += Decimal('1')
         supporting_points_list.append('n='+str(len(nodes_to_monitor)))
-        # print('number of zeros : ' + str(counter))
         weights_estimations.append(estimate(net=net, N=N, covariance_matrix=covmat,sigma=sigma, estimation_Type='using_weights' , nodes_to_monitor=nodes_to_monitor, weights=weights))
         sys.stdout.flush()
     print('\r \t algorithm runs are done...')
@@ -293,7 +255,6 @@ if __name__ == '__main__':
     for i in range(10):
         uniform_mses.append(mean_squared_error(uniform_estimations[i] , rtt_delays))
         weights_mses.append(mean_squared_error(weights_estimations[i] , rtt_delays))
-    # print('sigma:   ' +str(sigma))
     print('uniform mses:   ' + str(uniform_mses))
     print('weighted mses:   ' + str(weights_mses))
     plt.plot(uniform_mses, 'o-', label='uniform')
