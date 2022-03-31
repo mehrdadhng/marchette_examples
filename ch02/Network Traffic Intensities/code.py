@@ -264,7 +264,7 @@ if __name__ == '__main__':
     for i , txt in enumerate(supporting_points_list):
         plt.annotate(txt , (i , weights_mses[i]) , rotation=45)
     plt.legend()
-    plt.savefig('results.jpg')
+    #plt.savefig('results.jpg')
     plt.show()
     #CLI(net)
     net.stop()
